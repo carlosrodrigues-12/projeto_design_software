@@ -1,0 +1,53 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+Person(visitante, "Visitante", "Acesso público")
+Person(doador, "Doador", "Doa itens, agenda coletas")
+Person(voluntario, "Voluntário", "Participa de ações")
+Person(admin, "Administrador", "Gestão completa")
+Person(logistica, "Gestor Logística", "Coletas e estoque")
+
+System_Boundary(conectabem, "Sistema Conecta Bem") {
+    
+    Container(webapp, "Aplicação Web", "React/Angular", "Interface responsiva para todos os usuários", "HTTP/HTTPS")
+    
+    Container(api, "API Backend", "Node.js/Spring Boot", "Lógica de negócio, orquestração", "REST/GraphQL")
+    
+    Container(auth_service, "Serviço de Autenticação", "Node.js + JWT", "Autenticação, autorização, gestão de sessões")
+    
+    Container(donation_service, "Serviço de Doações", "Node.js", "Gestão de campanhas, doações, agendamentos")
+    
+    Container(volunteer_service, "Serviço de Voluntariado", "Node.js", "Gestão de vagas, inscrições, atividades")
+    
+    Container(payment_service, "Serviço de Pagamento", "Node.js", "Integração com gateway externo")
+    
+    ContainerDb(database, "Banco de Dados", "PostgreSQL", "Armazena dados de usuários, campanhas, doações, voluntários")
+    
+    ContainerDb(file_store, "Armazenamento de Arquivos", "Amazon S3", "Imagens de campanhas, avatares")
+}
+
+System_Ext(payment_gateway, "Gateway de Pagamento", "Mercado Pago/Stripe")
+
+Rel(visitante, webapp, "Navega, visualiza", "HTTP/HTTPS")
+Rel(doador, webapp, "Doa, agenda, acompanha", "HTTP/HTTPS")
+Rel(voluntario, webapp, "Inscreve-se, gerencia", "HTTP/HTTPS")
+Rel(admin, webapp, "Gerencia conteúdo", "HTTP/HTTPS")
+Rel(logistica, webapp, "Gerencia coletas", "HTTP/HTTPS")
+
+Rel(webapp, api, "Requisições da UI", "HTTPS, JSON, síncrono")
+Rel(api, auth_service, "Valida credenciais", "HTTPS, JWT, síncrono")
+Rel(api, donation_service, "Processa doações", "HTTPS, JSON, síncrono")
+Rel(api, volunteer_service, "Gerencia voluntários", "HTTPS, JSON, síncrono")
+Rel(api, payment_service, "Processa pagamentos", "HTTPS, JSON, síncrono")
+
+Rel(donation_service, database, "CRUD campanhas/doações", "JDBC, síncrono")
+Rel(volunteer_service, database, "CRUD vagas/inscrições", "JDBC, síncrono")
+Rel(auth_service, database, "CRUD usuários/perfis", "JDBC, síncrono")
+Rel(payment_service, database, "CRUD transações", "JDBC, síncrono")
+
+Rel(api, file_store, "Upload/download imagens", "HTTPS, assíncrono")
+Rel(payment_service, payment_gateway, "Processa pagamento", "API REST, síncrono, OAuth2")
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+Person(visitante, "Visitante", "Pessoa que acessa a plataforma publicamente")
+Person(doador, "Doador", "Usuário cadastrado que realiza doações de itens")
+Person(voluntario, "Voluntário", "Usuário cadastrado que participa de ações voluntárias")
+Person(admin, "Administrador", "Gerencia campanhas, doações, voluntários e usuários")
+Person(logistica, "Gestor de Logística", "Administra coletas, rotas e estoque")
+
+System_Boundary(curso, "Plataforma Conecta Bem") {
+ System(conectabem, "Plataforma Conecta Bem", "Sistema web para doações e gestão de voluntariado.")
+}
+
+System(conectabem, "Plataforma Conecta Bem", "Sistema web para doações e gestão de voluntariado")
+
+System_Ext(gateway, "Gateway de Pagamento", "Sistema externo para processamento de pagamentos")
+System_Ext(bd, "Banco de Dados", "Armazena dados da plataforma")
+
+Rel(visitante, conectabem, "Acessa páginas públicas, visualiza campanhas, cadastra-se", "HTTP/HTTPS")
+Rel(doador, conectabem, "Realiza doações, agenda coletas, acompanha status", "HTTP/HTTPS")
+Rel(voluntario, conectabem, "Inscreve-se em ações, gerencia participação", "HTTP/HTTPS")
+Rel(admin, conectabem, "Gerencia conteúdo, usuários, campanhas e relatórios", "HTTP/HTTPS")
+Rel(logistica, conectabem, "Gerencia coletas, designa voluntários, atualiza estoque", "HTTP/HTTPS")
+
+Rel(conectabem, gateway, "Processa doações financeiras", "API REST")
+Rel(conectabem, bd, "Armazena e consulta dados", "SQL/JDBC")
+@enduml
