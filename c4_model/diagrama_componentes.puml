@@ -3,6 +3,12 @@
 
 LAYOUT_LEFT_RIGHT()
 
+Container(gateway_api, "Gateway de API", "Spring Cloud Gateway", "Roteamento de requisições")
+Container(servico_notificacoes, "Serviço de Notificações", "Node.js", "Envio de notificações")
+Container(servico_autenticacao, "Serviço de Autenticação", "Node.js + JWT", "Validação de tokens")
+Container(payment_service, "Serviço de Pagamento", "Node.js", "Integração com gateway externo")
+ContainerDb(banco_dados, "Banco de Dados", "PostgreSQL", "Armazena dados de doações")
+
 Container_Boundary(servico_doacoes, "Serviço de Doações") {
     
     Component(controlador_campanhas, "Controlador de Campanhas", "Controlador REST", "Gerencia endpoints de campanhas")
@@ -10,80 +16,74 @@ Container_Boundary(servico_doacoes, "Serviço de Doações") {
     Component(controlador_agendamentos, "Controlador de Agendamentos", "Controlador REST", "Gerencia endpoints de agendamento")
     Component(controlador_estoque, "Controlador de Estoque", "Controlador REST", "Gerencia endpoints de estoque")
     
+    Component(servico_base, "Serviço Abstrato de Base", "Componente Serviço", "Lógica de negócio")
     Component(servico_campanhas, "Serviço de Campanhas", "Serviço", "Lógica de negócio de campanhas")
-    Component(servico_doacoes_logica, "Serviço de Doações", "Serviço", "Lógica de negócio de doações")
     Component(servico_agendamentos, "Serviço de Agendamentos", "Serviço", "Lógica de agendamento de coletas")
+    Component(servico_doacoes_logica, "Serviço de Doações", "Serviço", "Lógica de negócio de doações")
     Component(servico_estoque, "Serviço de Estoque", "Serviço", "Lógica de triagem e estoque")
+    Component(servico_pagamento, "Serviço de Pagamento", "Serviço", "Lógica de pagamento")
     
     Component(repositorio_campanhas, "Repositório de Campanhas", "Repositório", "Acesso a dados de campanhas")
     Component(repositorio_doacoes, "Repositório de Doações", "Repositório", "Acesso a dados de doações")
     Component(repositorio_agendamentos, "Repositório de Agendamentos", "Repositório", "Acesso a dados de agendamentos")
     Component(repositorio_estoque, "Repositório de Estoque", "Repositório", "Acesso a dados de estoque")
-    
-    Component(notificador_email, "Notificador de E-mail", "Componente", "Notificações por e-mail")
-    Component(atualizador_status, "Atualizador de Status", "Componente", "Atualização de status em cascata")
+
     Component(servico_validacao, "Serviço de Validação", "Componente", "Validações de regras de negócio")
-    
     Component(gerenciador_eventos, "Gerenciador de Eventos", "Componente", "Publicação/assinação de eventos")
+    Component(atualizador_status, "Atualizador de Status", "Componente", "Atualização de status em cascata")
+    Component(notificador_email, "Notificador de E-mail", "Componente", "Notificações por e-mail")
+
+    ' Serviço base
+    Rel(controlador_campanhas, servico_base, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(controlador_agendamentos, servico_base, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(controlador_doacoes, servico_base, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(controlador_estoque, servico_base, "Chama métodos de serviço", "Java/Node.js, síncrono")
+
+    ' Conexões Serviços
+    Rel(servico_base, servico_campanhas, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(servico_base, servico_agendamentos, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(servico_base, servico_doacoes_logica, "Chama métodos de serviço", "Java/Node.js, síncrono")
+    Rel(servico_base, servico_estoque, "Chama métodos de serviço", "Java/Node.js, síncrono")
+
+    ' Comunicação de Eventos (Serviço -> Gerenciador)
+    Rel(servico_campanhas, gerenciador_eventos, "Publica evento: CampanhaCriada", "Evento, assíncrono")
+    Rel(servico_agendamentos, gerenciador_eventos, "Publica evento: DoacaoRealizada", "Evento, assíncrono")
+    Rel(servico_doacoes_logica, gerenciador_eventos, "Publica evento: ColetaAgendada", "Evento, assíncrono")
+    Rel(servico_estoque, gerenciador_eventos, "Publica evento: TriagemConcluida", "Evento, assíncrono")
+    Rel(servico_doacoes_logica, servico_pagamento, "Processa Pagamento", "HTTPS/JSON", "Evento, assíncrono")
+    Rel(servico_pagamento, payment_service, "Processa Pagamento", "HTTPS/JSON", "Evento, assíncrono")
+
+    ' Conexões Repositórios
+    Rel(gerenciador_eventos, repositorio_campanhas, "Operações CRUD", "Java/Node.js, síncrono")
+    Rel(gerenciador_eventos, repositorio_doacoes, "Operações CRUD", "Java/Node.js, síncrono")
+    Rel(gerenciador_eventos, repositorio_agendamentos, "Operações CRUD", "Java/Node.js, síncrono")
+    Rel(gerenciador_eventos, repositorio_estoque, "Operações CRUD", "Java/Node.js, síncrono")
+
+    ' Conexões para Validações
+    Rel(servico_base, servico_validacao, "Valida regras de doação, Valida disponibilidade", "Java/Node.js, síncrono")
+
+    ' Conexões para Atualização de Status e Notificações
+    Rel(atualizador_status, servico_notificacoes, "Notifica mudança de status", "HTTPS/JSON, assíncrono")
+    Rel(notificador_email, servico_notificacoes, "Envia e-mail", "HTTPS/JSON, assíncrono")
+
+    ' Comunicação de Eventos (Gerenciador -> Componentes Assinantes)
+    Rel(gerenciador_eventos, atualizador_status, "Notifica eventos de status", "Evento, assíncrono")
+    Rel(gerenciador_eventos, notificador_email, "Notifica eventos de e-mail", "Evento, assíncrono")
 }
 
-ContainerDb(banco_dados, "Banco de Dados", "PostgreSQL", "Armazena dados de doações")
+' Gateway de API -> Controladores
+Rel_Down(gateway_api, controlador_campanhas, "POST/GET /api/campanhas", "HTTPS/JSON, síncrono")
+Rel_Down(gateway_api, controlador_doacoes, "POST/GET /api/doacoes", "HTTPS/JSON, síncrono")
+Rel_Down(gateway_api, controlador_agendamentos, "POST/GET /api/agendamentos", "HTTPS/JSON, síncrono")
+Rel_Down(gateway_api, controlador_estoque, "POST/GET /api/estoque", "HTTPS/JSON, síncrono")
 
-Container(gateway_api, "Gateway de API", "Spring Cloud Gateway", "Roteamento de requisições")
-Container(servico_notificacoes, "Serviço de Notificações", "Node.js", "Envio de notificações")
-Container(servico_autenticacao, "Serviço de Autenticação", "Node.js + JWT", "Validação de tokens")
+' Serviço de Autenticação
+Rel(gateway_api, servico_autenticacao, "Valida token JWT", "HTTPS, síncrono")
 
-' Conexões do Gateway API para os Controladores
-Rel(gateway_api, controlador_campanhas, "POST/GET /api/campanhas", "HTTPS/JSON, síncrono")
-Rel(gateway_api, controlador_doacoes, "POST/GET /api/doacoes", "HTTPS/JSON, síncrono")
-Rel(gateway_api, controlador_agendamentos, "POST/GET /api/agendamentos", "HTTPS/JSON, síncrono")
-Rel(gateway_api, controlador_estoque, "POST/GET /api/estoque", "HTTPS/JSON, síncrono")
-
-' Conexões entre Controladores e Serviços
-Rel(controlador_campanhas, servico_campanhas, "Chama métodos de serviço", "Java/Node.js, síncrono")
-Rel(controlador_doacoes, servico_doacoes_logica, "Chama métodos de serviço", "Java/Node.js, síncrono")
-Rel(controlador_agendamentos, servico_agendamentos, "Chama métodos de serviço", "Java/Node.js, síncrono")
-Rel(controlador_estoque, servico_estoque, "Chama métodos de serviço", "Java/Node.js, síncrono")
-
-' Conexões entre Serviços e Repositórios
-Rel(servico_campanhas, repositorio_campanhas, "Operações CRUD", "Java/Node.js, síncrono")
-Rel(servico_doacoes_logica, repositorio_doacoes, "Operações CRUD", "Java/Node.js, síncrono")
-Rel(servico_agendamentos, repositorio_agendamentos, "Operações CRUD", "Java/Node.js, síncrono")
-Rel(servico_estoque, repositorio_estoque, "Operações CRUD", "Java/Node.js, síncrono")
-
-' Conexões dos Repositórios para o Banco de Dados
-Rel(repositorio_campanhas, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
-Rel(repositorio_doacoes, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
-Rel(repositorio_agendamentos, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
-Rel(repositorio_estoque, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
-
-' Conexões para Validações
-Rel(servico_doacoes_logica, servico_validacao, "Valida regras de doação", "Java/Node.js, síncrono")
-Rel(servico_agendamentos, servico_validacao, "Valida disponibilidade", "Java/Node.js, síncrono")
-
-' Conexões para Atualização de  Statuse Notificações
-Rel(servico_doacoes_logica, atualizador_status, "Atualiza status do doador", "Evento, assíncrono")
-Rel(atualizador_status, servico_notificacoes, "Notifica mudança de status", "HTTPS/JSON, assíncrono")
-
-Rel(servico_campanhas, notificador_email, "Notifica novos eventos", "Evento, assíncrono")
-Rel(notificador_email, servico_notificacoes, "Envia e-mail", "HTTPS/JSON, assíncrono")
-
-' Conexões para Validação de Autenticação
-Rel_D(controlador_campanhas, servico_autenticacao, "Valida token JWT", "HTTPS, síncrono")
-Rel_D(controlador_doacoes, servico_autenticacao, "Valida token JWT", "HTTPS, síncrono")
-Rel_D(controlador_agendamentos, servico_autenticacao, "Valida token JWT", "HTTPS, síncrono")
-
-' Relações internas entre serviços via Gerenciador de Eventos
-Rel(servico_campanhas, gerenciador_eventos, "Publica evento: CampanhaCriada", "Evento, assíncrono")
-Rel(servico_doacoes_logica, gerenciador_eventos, "Publica evento: DoacaoRealizada", "Evento, assíncrono")
-Rel(servico_agendamentos, gerenciador_eventos, "Publica evento: ColetaAgendada", "Evento, assíncrono")
-Rel(servico_estoque, gerenciador_eventos, "Publica evento: TriagemConcluida", "Evento, assíncrono")
-
-Rel(gerenciador_eventos, atualizador_status, "Notifica eventos de status", "Evento, assíncrono")
-Rel(gerenciador_eventos, notificador_email, "Notifica eventos de e-mail", "Evento, assíncrono")
-
-' Relações diretas entre serviços
-Rel(servico_campanhas, servico_doacoes_logica, "Consulta campanhas ativas", "Java/Node.js, síncrono")
-Rel(servico_doacoes_logica, servico_agendamentos, "Dispara processo de agendamento", "Java/Node.js, síncrono")
+' Repositórios -> Banco de Dados (Parte inferior do diagrama)
+Rel_Down(repositorio_campanhas, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
+Rel_Down(repositorio_doacoes, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
+Rel_Down(repositorio_agendamentos, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
+Rel_Down(repositorio_estoque, banco_dados, "INSERT/UPDATE/SELECT", "JDBC, síncrono")
 
 @enduml
