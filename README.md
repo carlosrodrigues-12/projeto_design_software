@@ -22,16 +22,16 @@ Projeto e Design de Software - Trabalho Prático
 #### Projeto de Software
 - Diagrama de Contexto:
 
-[![Diagrama de Contexto](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/tree/main/c4_model/images/diagrama_contexto.png)](c4_model/images/diagrama_contexto.png)
+  [![Diagrama de Contexto](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/main/c4_model/images/diagrama_contexto.png)](c4_model/images/diagrama_contexto.png)
 
 ---
 
 - Diagrama de Container:
 
-[![Diagrama de Container](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/tree/main/c4_model/images/diagrama_containeres.png)](c4_model/images/diagrama_containeres.png)
+  [![Diagrama de Container](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/main/c4_model/images/diagrama_containeres.png)](c4_model/images/diagrama_containeres.png)
 
 ---
 
 - Diagrama de Componente:
 
-[![Diagrama de Componente](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/tree/main/c4_model/images/diagrama_componentes.png)](c4_model/images/diagrama_componentes.png)
+  [![Diagrama de Componente](https://raw.githubusercontent.com/carlosrodrigues-12/projeto_design_software/main/c4_model/images/diagrama_componentes.png)](c4_model/images/diagrama_componentes.png)
