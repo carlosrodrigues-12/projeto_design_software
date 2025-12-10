@@ -1,6 +1,3 @@
-# projeto_design_software
-Projeto e Design de Software - Trabalho Prático
-
 # Projeto Conecta bem
 ### Plataforma de doação e gestão de voluntariado
 
@@ -12,9 +9,6 @@ Projeto e Design de Software - Trabalho Prático
 |-|-|
 | Carlos Henrique Silva Bispo Rodrigues | 2025200222 |
 | Lucas Rodrigues Porto | 2025200247 |
-
-**Disciplina:** Projeto e Design de Software
-**Professor:** Fábio Nogueira de Lucena
 
 ---
 
